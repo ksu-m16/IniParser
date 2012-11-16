@@ -14,17 +14,14 @@ import java.util.TreeMap;
 public class Parser {
 	
 	List<String> text;
+	Map<String,String> paramsMap;
 	
-	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		
 		Parser p = new Parser();
-		try {
-			p.load("e:\\MyDocuments\\My\\tm\\test.ini");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		p.load("e:\\MyDocuments\\My\\tm\\test.ini");
+		
 		
 		String s = p.get("parameter3");
 		System.out.println("result");
@@ -39,37 +36,45 @@ public class Parser {
 //
 //		parameter3=val=ue3
 //
-//		Комментарием считается часть строки после первой точки с запятой.
-//		Пустые строки (или состоящие только из пробелов игнорируются)
-//		Именем параметра считается часть строки от начала, до первого символа равно
-//		Значением параметра считается часть строки после символа равно и до конца
-//		строки или ;. Символы перевода строки и ; в значение параметра на входят.
-
-		
-		// TODO Auto-generated method stub
 
 	}
 	
-	public void load(String fileName) throws IOException { //загружает ini
+	public void load(String fileName) throws IOException { 
 		text = new LinkedList<String>();
 		BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(new File(fileName))));
 		String s = "";
+
 		while ((s = r.readLine()) != null) {
 			text.add(s);
 		}
+		
+		paramsMap = parseParams(text);
+		
+		r.close();
 	}
 	
 	
-	public void append(String fileName) throws IOException { //дополняет существующую конфигурация из другого ini
+	public void append(String fileName) throws IOException {
 		BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(new File(fileName))));
 		String s = "";
+		List<String> textToAppend = new LinkedList<String>();
 		while ((s = r.readLine()) != null) {
-			text.add(s);
+			textToAppend.add(s);
 		}
+		paramsMap.putAll(parseParams(text));
+		
+//	m.b. here'e better to do so: (no extra List will be created)
+		
+//		while ((s = r.readLine()) != null) {
+//		text.add(s);
+//	}
+//	
+//	paramsMap = parseParams(text);
+		
+		r.close();
 	}
 	
-	public String get(String name){ //возвращает значение параметра по его имени
-		Map<String,String> paramsMap = parseParams(text);
+	public String get(String name){
 		return paramsMap.get(name);
 	}
 	
@@ -83,9 +88,9 @@ public class Parser {
 			}
 			
 			if (s.indexOf('=') == -1) {
-				paramsMap.put(s.trim(), "");
-				continue;
+				throw new IllegalArgumentException("Invalid parameter found: " + s);
 			}
+			
 			paramsMap.put(s.substring(0,s.indexOf('=')).trim(), 
 					s.substring(s.indexOf('=') + 1).trim());
 			
